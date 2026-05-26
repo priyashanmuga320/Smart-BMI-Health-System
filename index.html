@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart BMI Health System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .page {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 12px;
+            margin: 10px;
+            border-radius: 8px;
+            border: none;
+            width: 260px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 25px;
+            margin: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            background: #ff6a88;
+            color: white;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff3d68;
+        }
+
+        .result-box {
+            background: white;
+            color: black;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        .section {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .section h3 {
+            color: #ff6a88;
+        }
+
+        .time {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- PAGE 1 -->
+<div class="page active" id="page1">
+    <h1>Smart BMI Health System</h1>
+    <button onclick="nextPage(2)">Start</button>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="page2">
+    <h1>Enter Your Details</h1>
+    <input type="text" id="name" placeholder="Enter Name"><br>
+    <input type="number" id="age" placeholder="Enter Age"><br>
+    <input type="number" id="weight" placeholder="Weight (kg)"><br>
+    <input type="number" id="height" placeholder="Height (cm)"><br>
+    <button onclick="calculateBMI()">Submit</button>
+    <button onclick="nextPage(1)">Back</button>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page" id="page3">
+    <div class="result-box" id="reportContent">
+        <h1>Health Report</h1>
+        <p id="resultText"></p>
+
+        <div class="section" id="foodChart"></div>
+        <div class="section" id="avoidFood"></div>
+        <div class="section" id="yogaSection"></div>
+
+        <p class="time" id="dateTime"></p>
+    </div>
+
+    <button onclick="nextPage(2)">Back</button>
+    <button onclick="downloadPDF()">Download PDF</button>
+</div>
+
+<script>
+
+function nextPage(pageNumber) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById("page" + pageNumber).classList.add("active");
+}
+
+function calculateBMI() {
+
+    let name = document.getElementById("name").value;
+    let age = document.getElementById("age").value;
+    let weight = document.getElementById("weight").value;
+    let heightInput = document.getElementById("height").value;
+
+    if(!name || !age || !weight || !heightInput){
+        alert("Please fill all fields");
+        return;
+    }
+
+    let height = heightInput / 100;
+    let bmi = (weight / (height * height)).toFixed(2);
+
+    let category = "";
+    let food = "";
+    let avoid = "";
+    let yoga = "";
+
+    if (bmi < 18.5) {
+        category = "Underweight";
+        food = "<h3>Proper Food Chart (Weight Gain)</h3><ul><li>Rice, Chapati</li><li>Eggs, Chicken</li><li>Milk & Nuts</li></ul>";
+        avoid = "<h3>Foods to Avoid</h3><ul><li>Skipping meals</li><li>Junk food</li></ul>";
+        yoga = "<h3>Recommended Yoga</h3><ul><li>Surya Namaskar</li><li>Bhujangasana</li></ul>";
+    }
+    else if (bmi < 25) {
+        category = "Normal Weight";
+        food = "<h3>Proper Food Chart (Maintain)</h3><ul><li>Vegetables & Fruits</li><li>Lean Protein</li><li>Drink 2-3L Water</li></ul>";
+        avoid = "<h3>Foods to Avoid</h3><ul><li>Excess sugar</li><li>Fast food</li></ul>";
+        yoga = "<h3>Recommended Yoga</h3><ul><li>Vrikshasana</li><li>Tadasana</li></ul>";
+    }
+    else {
+        category = "Overweight";
+        food = "<h3>Proper Food Chart (Weight Loss)</h3><ul><li>High Fiber Vegetables</li><li>Fruits</li></ul>";
+        avoid = "<h3>Foods to Avoid</h3><ul><li>Fried food</li><li>Sweets</li></ul>";
+        yoga = "<h3>Recommended Yoga</h3><ul><li>Kapalbhati</li><li>Chair Pose</li></ul>";
+    }
+
+    document.getElementById("resultText").innerHTML =
+        `Name: ${name}<br>Age: ${age}<br>BMI: ${bmi}<br>Category: ${category}`;
+
+    document.getElementById("foodChart").innerHTML = food;
+    document.getElementById("avoidFood").innerHTML = avoid;
+    document.getElementById("yogaSection").innerHTML = yoga;
+    document.getElementById("dateTime").innerHTML =
+        "Generated on: " + new Date().toLocaleString();
+
+    nextPage(3);
+}
+
+function downloadPDF() {
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    html2canvas(document.getElementById("reportContent"), {
+        scale: 2
+    }).then(canvas => {
+
+        const imgData = canvas.toDataURL("image/png");
+        const imgWidth = 210;
+        const pageHeight = 297;
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            doc.addPage();
+            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        doc.save("Smart_BMI_Report.pdf");
+    });
+}
+
+</script>
+
+</body>
+</html>
